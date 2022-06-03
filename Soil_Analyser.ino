@@ -105,6 +105,7 @@ void loop() {
     Serial.print(event.relative_humidity);
     Serial.println(F("%"));
   }
+  delay(1000);
   int nit, pho, pot;
   nit = nitrogen();
   delay(250);
@@ -131,10 +132,11 @@ void loop() {
   Serial.print(pot);
   Serial.println(" mg/kg");
   delay(250);
-  simSerial.listen();
-  while(simSerial.isListening()) {
-    gprs(nit, pho, pot, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
-  }
+//  simSerial.listen();
+//  delay(1000);
+//  if(simSerial.isListening()) {
+//    gprs(nit, pho, pot, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
+//  }
 
 }
 
@@ -143,10 +145,11 @@ int nitrogen() {
   digitalWrite(RE_DE_1, HIGH);
   delay(10);
   npk.listen();
-  while(npk.isListening()) {
+  delay(1000);
+  if(npk.isListening()) {
     if (npk.write(nitro, sizeof(nitro)) == 8) {
       digitalWrite(RE_DE_1, LOW);
-
+      delay(500);
       for (int i = 0; i < 11; i++)
       {
         values[i] = npk.read();
@@ -162,9 +165,11 @@ int phosphorous() {
   digitalWrite(RE_DE_1, HIGH);
   delay(10);
   npk.listen();
-  while(npk.isListening()) {
+  delay(500);
+  if(npk.isListening()) {
     if (npk.write(phos, sizeof(phos)) == 8) {
       digitalWrite(RE_DE_1, LOW);
+      delay(500);
       for (int i = 0; i < 11; i++)
       {
         values[i] = npk.read();
@@ -180,9 +185,11 @@ int potassium() {
   digitalWrite(RE_DE_1, HIGH);
   delay(10);
   npk.listen();
-  while(npk.isListening()) {
+  delay(500);
+  if(npk.isListening()) {
     if (npk.write(pota, sizeof(pota)) == 8) {
       digitalWrite(RE_DE_1, LOW);
+      delay(500);
       for (int i = 0; i < 11; i++)
       {
         values[i] = npk.read();
@@ -199,10 +206,12 @@ int soil_pH() {
   digitalWrite(RE_DE_2, HIGH);
   delay(10);
   s_pH.listen();
-  while(s_pH.isListening()) {
+  delay(1000);
+  if(s_pH.isListening()) {
     if (s_pH.write(ph, sizeof(ph)) == 8)
     {
       digitalWrite(RE_DE_2, LOW);
+      delay(500);
       for (int i = 0; i < 11; i++)
       {
         values[i] = s_pH.read();
