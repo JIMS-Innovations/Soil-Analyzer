@@ -132,11 +132,13 @@ void loop() {
   Serial.print(pot);
   Serial.println(" mg/kg");
   delay(250);
-//  simSerial.listen();
-//  delay(1000);
-//  if(simSerial.isListening()) {
-//    gprs(nit, pho, pot, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
-//  }
+  simSerial.listen();
+  delay(1000);
+  SIM_PowerOn();
+  delay(500);
+  if(simSerial.isListening()) {
+    gprs(nit, pho, pot, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
+  }
 
 }
 
@@ -295,6 +297,19 @@ String uv()
     UVIndex = "11";
   }
   return UVIndex;
+}
+
+// SIM Module power ON************
+void SIM_PowerOn(){
+  simSerial.println("AT");
+  delay(500);
+  if(!simSerial.find("OK")){
+    digitalWrite(SIM_PWR, HIGH);
+    delay(1500);
+    digitalWrite(SIM_PWR, LOW);
+    delay(150);
+  }
+  
 }
 
 // Gprs Upload-------------------------------------------------------
