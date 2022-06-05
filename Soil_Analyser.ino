@@ -24,11 +24,12 @@ SoftwareSerial simSerial(SIM_TX, SIM_RX);
 char *indoor_1[] = {
   "nitrogen",
   "phosphorus",
-  "potassiun",
+  "potassium",
   "soil-moisture",
   "temperature",
   "humidity",
   "uv",
+  "soil-ph",
   "BBFF-YXiQxsPUfhtWW1lKekGu49rgAEnkM9",
   "soil-analyser"
 };
@@ -117,9 +118,11 @@ void loop() {
   float soil_moisture = moisture();
   String UV = uv();
 
-  String token = String(indoor_1[7]);
-  String device = String(indoor_1[8]);
+  String token = String(indoor_1[8]);
+  String device = String(indoor_1[9]);
 
+  Serial.println("Soil Moisture: " + String(soil_moisture));
+  Serial.println("UV Index: " + UV);
   Serial.print("Soil Ph: ");
   Serial.println(soil_ph, 1);
   Serial.print("Nitrogen: ");
@@ -137,7 +140,7 @@ void loop() {
   SIM_PowerOn();
   delay(500);
   if(simSerial.isListening()) {
-    gprs(nit, pho, pot, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
+    gprs(nit, pho, pot, soil_ph, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
   }
 
 }
@@ -315,7 +318,7 @@ void SIM_PowerOn(){
 // Gprs Upload-------------------------------------------------------
 
 
-void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int temperature, int humidity, String UV, float lat, float lon, String apn, String token, String device)
+void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int soil_ph, int temperature, int humidity, String UV, float lat, float lon, String apn, String token, String device)
 {
   if (simSerial.available())
     Serial.write(simSerial.read());
@@ -399,10 +402,11 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int t
 
   String value1 = "{\"" + String(indoor_1[0]) + "\": " + String(nitrogen) + ", \"" + String(indoor_1[1]) + "\": " + String(phosphorus) + ", \"" + String(indoor_1[2]) + "\": " + String(potassium);
   String value2 = ", \"" + String(indoor_1[3]) + "\": " + String(soil_moisture) + ", \"" + String(indoor_1[4]) + "\": " + String(temperature) + ", \"" + String(indoor_1[5]) + "\": " + String(humidity);
-  String value3 = ", \"" + String(indoor_1[6]) + "\": " + UV + ", \"" + "location" + "\": \"context\" {\"lat\": " + String(lat) + "\"lng\": " + String(lon) + "} " + "}";
+  String value3 = ", \"" + String(indoor_1[6]) + "\": " + UV + String(indoor_1[7]) + "\": " + String(soil_ph) +  "}";
+//  ", \"" + "location" + "\": \"context\" {\"lat\": " + String(lat) + "," + "\"lng\": " + String(lon) + "} " +
   int i = value1.length();
   int j = value2.length();
-  int k = value3.length();
+//  int k = value3.length();
   // String str = "GET https://api.thingspeak.com/update?api_key=QPK8OIBKF34IDKFT&field1=" + String(temp1) + "&field2=" + String(temp2) + "&field3=" + String(hum1) + "&field4=" + String(hum2) + "&field5=" + String(co2) + "&field6=" + String(soilTemp) + "&field7=" + String(par);
   String str1 = "POST /api/v1.6/devices/" + device + "/ HTTP/1.1\r\n";
   String str2 = "Content-Type: application/json\r\nContent-Length: ";
@@ -420,11 +424,11 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int t
   //"\r\n";
   // Serial.println(str1 + str2 + str3 + str4 + value);
   // delay(1000);
-  simSerial.print(" POST /api/v1.6/devices/");
+  simSerial.print("POST /api/v1.6/devices/");
   delay(1000);
   simSerial.print(device);
   delay(1000);
-  simSerial.println("/HTTP/1.1");
+  simSerial.println("/ HTTP/1.1");
   delay(1000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
@@ -444,7 +448,7 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int t
   delay(1000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
-  simSerial.println("Content-Length: " + String(i + j + k));
+  simSerial.println("Content-Length: " + String(i + j));
   delay(1000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
@@ -495,12 +499,14 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int t
     Serial.write(simSerial.read());
   delay(5000);
 
-  simSerial.println("AT+CIPSHUT"); // close the connection
-  delay(100);
+  simSerial.println("AT+CIPCLOSE"); // close the connection
+  delay(1000);
 
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
   delay(5000);
+
+  Serial.println("");
 }
 
 //void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int temperature, int humidity, String UV, float lat, float lon, String apn, String token, String device)
