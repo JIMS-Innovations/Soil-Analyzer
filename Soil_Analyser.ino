@@ -139,8 +139,8 @@ void loop() {
   delay(1000);
   SIM_PowerOn();
   delay(500);
-  if(simSerial.isListening()) {
-    gprs(nit, pho, pot, soil_ph, soil_moisture, temp, humidity, UV, lat, lon, apn, token, device);
+  if (simSerial.isListening()) {
+    gprs(nit, pho, pot, soil_moisture, soil_ph, temp, humidity, UV, lat, lon, apn, token, device);
   }
 
 }
@@ -151,7 +151,7 @@ int nitrogen() {
   delay(10);
   npk.listen();
   delay(1000);
-  if(npk.isListening()) {
+  if (npk.isListening()) {
     if (npk.write(nitro, sizeof(nitro)) == 8) {
       digitalWrite(RE_DE_1, LOW);
       delay(500);
@@ -171,7 +171,7 @@ int phosphorous() {
   delay(10);
   npk.listen();
   delay(500);
-  if(npk.isListening()) {
+  if (npk.isListening()) {
     if (npk.write(phos, sizeof(phos)) == 8) {
       digitalWrite(RE_DE_1, LOW);
       delay(500);
@@ -191,7 +191,7 @@ int potassium() {
   delay(10);
   npk.listen();
   delay(500);
-  if(npk.isListening()) {
+  if (npk.isListening()) {
     if (npk.write(pota, sizeof(pota)) == 8) {
       digitalWrite(RE_DE_1, LOW);
       delay(500);
@@ -212,7 +212,7 @@ int soil_pH() {
   delay(10);
   s_pH.listen();
   delay(1000);
-  if(s_pH.isListening()) {
+  if (s_pH.isListening()) {
     if (s_pH.write(ph, sizeof(ph)) == 8)
     {
       digitalWrite(RE_DE_2, LOW);
@@ -303,16 +303,16 @@ String uv()
 }
 
 // SIM Module power ON************
-void SIM_PowerOn(){
+void SIM_PowerOn() {
   simSerial.println("AT");
   delay(500);
-  if(!simSerial.find("OK")){
+  if (!simSerial.find("OK")) {
     digitalWrite(SIM_PWR, HIGH);
     delay(1500);
     digitalWrite(SIM_PWR, LOW);
     delay(150);
   }
-  
+
 }
 
 // Gprs Upload-------------------------------------------------------
@@ -320,6 +320,8 @@ void SIM_PowerOn(){
 
 void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int soil_ph, int temperature, int humidity, String UV, float lat, float lon, String apn, String token, String device)
 {
+
+
   if (simSerial.available())
     Serial.write(simSerial.read());
 
@@ -332,7 +334,7 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
 
   simSerial.println("AT+CPIN?");
   delay(1000);
-  
+
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
   delay(2000);
@@ -379,12 +381,12 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
     Serial.write(simSerial.read());
   delay(5000);
 
-  simSerial.println("AT+CIPSPRT=0");
-  delay(3000);
-
-  while (simSerial.available() != 0)
-    Serial.write(simSerial.read());
-  delay(5000);
+  //  simSerial.println("AT+CIPSPRT=0");
+  //  delay(3000);
+  //
+  //  while (simSerial.available() != 0)
+  //    Serial.write(simSerial.read());
+  //  delay(5000);
 
   simSerial.println("AT+CIPSTART=\"TCP\",\"things.ubidots.com\",80"); // start up the connection
   delay(6000);
@@ -393,6 +395,26 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
     Serial.write(simSerial.read());
   delay(5000);
 
+  String value1 = "{\"" + String(indoor_1[0]) + "\": " + String(nitrogen) + ", \"" + String(indoor_1[1]) + "\": " + String(phosphorus) + ", \"" + String(indoor_1[2]) + "\": " + String(potassium) ;
+  String value2 = ", \"" + String(indoor_1[3]) + "\": " + String(soil_moisture) + ", \"" + String(indoor_1[4]) + "\": " + String(temperature);
+  String value3 = ", \"" + String(indoor_1[5]) + "\": " + String(humidity);
+  String value4 = ", \"" + String(indoor_1[6]) + "\": " + UV + ", \"" + String(indoor_1[7]) + "\": " + String(soil_ph);
+  String value5 = ", \"location\": \"context\" {\"lat\": ";
+  String value6 = String(lat) + "," + "\"lng\": " + String(lon) + "} " +  "}";
+
+  int i = value1.length();
+  int j = value2.length();
+  int k = value3.length();
+  int l = value4.length();
+  int m = value5.length();
+  int n = value5.length();
+
+  String str1 = "POST /api/v1.6/devices/" + device + "/ HTTP/1.1\r\n";
+  String str2 = "Content-Type: application/json\r\nContent-Length: ";
+  String str3 = String(i + j + k + l) + "\r\nX-Auth-Token: ";
+  String str4 = token + "\r\n";
+  String str5 = "Host: things.ubidots.com\r\n\r\n";
+
   simSerial.println("AT+CIPSEND"); // begin send data to remote server
   delay(4000);
 
@@ -400,19 +422,10 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
     Serial.write(simSerial.read());
   delay(5000);
 
-  String value1 = "{\"" + String(indoor_1[0]) + "\": " + String(nitrogen) + ", \"" + String(indoor_1[1]) + "\": " + String(phosphorus) + ", \"" + String(indoor_1[2]) + "\": " + String(potassium);
-  String value2 = ", \"" + String(indoor_1[3]) + "\": " + String(soil_moisture) + ", \"" + String(indoor_1[4]) + "\": " + String(temperature) + ", \"" + String(indoor_1[5]) + "\": " + String(humidity);
-  String value3 = ", \"" + String(indoor_1[6]) + "\": " + UV + String(indoor_1[7]) + "\": " + String(soil_ph) +  "}";
-//  ", \"" + "location" + "\": \"context\" {\"lat\": " + String(lat) + "," + "\"lng\": " + String(lon) + "} " +
-  int i = value1.length();
-  int j = value2.length();
-//  int k = value3.length();
+
+
   // String str = "GET https://api.thingspeak.com/update?api_key=QPK8OIBKF34IDKFT&field1=" + String(temp1) + "&field2=" + String(temp2) + "&field3=" + String(hum1) + "&field4=" + String(hum2) + "&field5=" + String(co2) + "&field6=" + String(soilTemp) + "&field7=" + String(par);
-  String str1 = "POST /api/v1.6/devices/" + device + "/ HTTP/1.1\r\n";
-  String str2 = "Content-Type: application/json\r\nContent-Length: ";
-  String str3 = String(i) + "\r\nX-Auth-Token: ";
-  String str4 = token + "\r\n";
-  String str5 = "Host: things.ubidots.com\r\n\r\n";
+
   // str+= value;
   // "User-Agent:" + USER_AGENT + "/" + VERSION + "\r\n"
   //"X-Auth-Token: " + *TOKEN + "\r\n"
@@ -445,14 +458,17 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
   simSerial.println("Content-Type: application/json");
-  delay(1000);
+  delay(2000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
-  simSerial.println("Content-Length: " + String(i + j));
+  simSerial.print("Content-Length: ");
+  delay(1000);
+  simSerial.println(String(i + j + k + l + m + n));
   delay(1000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
   simSerial.println("");
+  delay(1000);
   simSerial.print(value1);
   delay(2000);
   while (simSerial.available() != 0)
@@ -461,8 +477,22 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
   delay(2000);
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
-  simSerial.println(value3);
+  simSerial.print(value3);
   delay(2000);
+  while (simSerial.available() != 0)
+    Serial.write(simSerial.read());
+  simSerial.print(value4);
+  delay(2000);
+  while (simSerial.available() != 0)
+    Serial.write(simSerial.read());
+  simSerial.print(value5);
+  delay(2000);
+  while (simSerial.available() != 0)
+    Serial.write(simSerial.read());
+  simSerial.print(value6);
+  delay(2000);
+  simSerial.println("");
+  delay(100);
   simSerial.println("");
   delay(1000);
   while (simSerial.available() != 0)
@@ -470,31 +500,31 @@ void gprs(int nitrogen, int phosphorus , int potassium, int soil_moisture, int s
   delay(1000);
 
   simSerial.println((char)26); // sending
-  delay(5000);               // waitting for reply, important! the time is base on the condition of internet
+  delay(8000);               // waitting for reply, important! the time is base on the condition of internet
   simSerial.println();
 
-//  if (simSerial.find("200"))
-//  {
-//    Serial.println("Upload Successful!");
-//
-//    digitalWrite(W_led, HIGH);
-//    delay(500);
-//    digitalWrite(W_led, LOW);
-//    delay(500);
-//  }
-//  else
-//  {
-//    Serial.println("Upload Error!");
-//
-//    digitalWrite(W_led, HIGH);
-//    delay(250);
-//    digitalWrite(W_led, LOW);
-//    delay(250);
-//    digitalWrite(W_led, HIGH);
-//    delay(250);
-//    digitalWrite(W_led, LOW);
-//    delay(250); 
-//  }
+  //  if (simSerial.find("200"))
+  //  {
+  //    Serial.println("Upload Successful!");
+  //
+  //    digitalWrite(W_led, HIGH);
+  //    delay(500);
+  //    digitalWrite(W_led, LOW);
+  //    delay(500);
+  //  }
+  //  else
+  //  {
+  //    Serial.println("Upload Error!");
+  //
+  //    digitalWrite(W_led, HIGH);
+  //    delay(250);
+  //    digitalWrite(W_led, LOW);
+  //    delay(250);
+  //    digitalWrite(W_led, HIGH);
+  //    delay(250);
+  //    digitalWrite(W_led, LOW);
+  //    delay(250);
+  //  }
   while (simSerial.available() != 0)
     Serial.write(simSerial.read());
   delay(5000);
